@@ -100,13 +100,29 @@ namespace SqlSharpener.Model
             }
             else
             {
-                var sqlDataTypeName = tSqlObject.GetReferenced(dac.Column.DataType).ToList().First().Name.Parts.Last();
-                this.DataTypes = DataTypeHelper.Instance.GetMap(TypeFormat.SqlServerDbType, sqlDataTypeName);
-                this.IsIdentity = dac.Column.IsIdentity.GetValue<bool>(tSqlObject);
-                this.IsNullable = dac.Column.Nullable.GetValue<bool>(tSqlObject);
-                this.Precision = dac.Column.Precision.GetValue<int>(tSqlObject);
-                this.Scale = dac.Column.Scale.GetValue<int>(tSqlObject);
-                this.Length = dac.Column.Length.GetValue<int>(tSqlObject);
+                dac.ColumnType metaType = tSqlObject.GetMetadata<dac.ColumnType>(dac.Column.ColumnType);
+
+                if (metaType == dac.ColumnType.Column)
+                {
+                    var sqlDataTypeName = tSqlObject.GetReferenced(dac.Column.DataType).ToList().First().Name.Parts.Last();
+                    this.DataTypes = DataTypeHelper.Instance.GetMap(TypeFormat.SqlServerDbType, sqlDataTypeName);
+                    this.IsIdentity = dac.Column.IsIdentity.GetValue<bool>(tSqlObject);
+                    this.IsNullable = dac.Column.Nullable.GetValue<bool>(tSqlObject);
+                    this.Precision = dac.Column.Precision.GetValue<int>(tSqlObject);
+                    this.Scale = dac.Column.Scale.GetValue<int>(tSqlObject);
+                    this.Length = dac.Column.Length.GetValue<int>(tSqlObject);
+                }
+                else if (metaType == dac.ColumnType.ComputedColumn)
+                {
+                    var referencedObject = tSqlObject.GetReferenced().First();
+                    var sqlDataTypeName = referencedObject.GetReferenced(dac.Column.DataType).ToList().First().Name.Parts.Last();
+                    this.DataTypes = DataTypeHelper.Instance.GetMap(TypeFormat.SqlServerDbType, sqlDataTypeName);
+                    this.IsIdentity = dac.Column.IsIdentity.GetValue<bool>(referencedObject);
+                    this.IsNullable = dac.Column.Nullable.GetValue<bool>(referencedObject);
+                    this.Precision = dac.Column.Precision.GetValue<int>(referencedObject);
+                    this.Scale = dac.Column.Scale.GetValue<int>(referencedObject);
+                    this.Length = dac.Column.Length.GetValue<int>(referencedObject);
+                }
             }
         }
 
